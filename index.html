@@ -542,7 +542,7 @@ const APP_CONFIG = Object.freeze({
   oauthClientId: '691753741006-9i13kjkk3ci2jv6lr6rupa491j7rlb64.apps.googleusercontent.com',
   oauthScope: 'openid email profile',
   // Apps Script 백엔드를 웹앱으로 배포한 뒤 /exec URL을 여기에 붙여넣으세요.
-  apiUrl: 'https://script.google.com/a/macros/frame-by.com/s/AKfycbyatB28-mjU6xpDMai_OuPMNfgVE-7iRmthmJZfzEEC6ihLnZi6_qV_4PL0JfRB93h7/exec'
+  apiUrl: 'https://script.google.com/a/macros/frame-by.com/s/AKfycbwdPYJcUQh8V15BdtSmA9UYkgzcES3rlRdVYGPjkh1zlmne3Zqx9M2sjuNzG2owdVhu/exec'
 });
 
 let GITHUB_ACCESS_TOKEN = null;
@@ -589,27 +589,94 @@ function tokenCacheClear(){
 function apiUrlReady(){
   return /^https:\/\/script\.google\.com\/(?:macros\/s|a\/macros\/[^/]+\/s)\/[^/?#]+\/exec(?:\?.*)?$/i.test(APP_CONFIG.apiUrl);
 }
-async function apiCall(action,payload={}){
+const API_PENDING=new Map();
+
+function isTrustedBackendOrigin(origin){
+  try{
+    const u=new URL(origin);
+    return u.protocol==='https:' && (
+      u.hostname==='script.google.com' ||
+      u.hostname==='script.googleusercontent.com' ||
+      u.hostname.endsWith('.googleusercontent.com')
+    );
+  }catch(e){return false}
+}
+
+window.addEventListener('message',event=>{
+  if(!isTrustedBackendOrigin(event.origin)) return;
+  const msg=event.data||{};
+  if(msg.type!=='frameby-login-info-api' || !msg.requestId) return;
+
+  const pending=API_PENDING.get(msg.requestId);
+  if(!pending) return;
+  API_PENDING.delete(msg.requestId);
+  clearTimeout(pending.timer);
+  pending.cleanup();
+
+  if(msg.ok){
+    pending.resolve(msg.data);
+  }else{
+    const err=new Error(msg.error||'요청 처리에 실패했습니다.');
+    err.code=msg.code||'';
+    pending.reject(err);
+  }
+});
+
+function makeRequestId(){
+  try{return crypto.randomUUID()}catch(e){return 'req_'+Date.now()+'_'+Math.random().toString(36).slice(2)}
+}
+
+function apiCall(action,payload={}){
   const token=GITHUB_ACCESS_TOKEN||tokenCacheGet();
-  if(!token) throw new Error('Google 로그인이 필요합니다.');
-  if(!apiUrlReady()) throw new Error('Apps Script 백엔드 URL이 아직 설정되지 않았습니다. index.html의 APP_CONFIG.apiUrl을 설정해 주세요.');
+  if(!token) return Promise.reject(new Error('Google 로그인이 필요합니다.'));
+  if(!apiUrlReady()) return Promise.reject(new Error('Apps Script 백엔드 URL이 아직 설정되지 않았습니다.'));
   GITHUB_ACCESS_TOKEN=token;
 
-  const res=await fetch(APP_CONFIG.apiUrl,{
-    method:'POST',
-    redirect:'follow',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({action,accessToken:token,payload})
+  return new Promise((resolve,reject)=>{
+    const requestId=makeRequestId();
+    const frame=document.createElement('iframe');
+    frame.name='frameby_api_'+requestId.replace(/[^a-zA-Z0-9_]/g,'');
+    frame.style.display='none';
+    frame.setAttribute('aria-hidden','true');
+
+    const form=document.createElement('form');
+    form.method='POST';
+    form.action=APP_CONFIG.apiUrl;
+    form.target=frame.name;
+    form.style.display='none';
+
+    const input=document.createElement('input');
+    input.type='hidden';
+    input.name='request';
+    input.value=JSON.stringify({requestId,action,accessToken:token,payload});
+    form.appendChild(input);
+
+    const cleanup=()=>{
+      try{form.remove()}catch(e){}
+      setTimeout(()=>{try{frame.remove()}catch(e){}},0);
+    };
+
+    const timer=setTimeout(()=>{
+      if(!API_PENDING.has(requestId)) return;
+      API_PENDING.delete(requestId);
+      cleanup();
+      reject(new Error('백엔드 응답이 없습니다. Apps Script 웹앱 배포 버전과 접근 권한을 확인해 주세요.'));
+    },20000);
+
+    API_PENDING.set(requestId,{resolve,reject,timer,cleanup});
+    document.body.appendChild(frame);
+    document.body.appendChild(form);
+
+    try{
+      form.submit();
+      form.remove();
+    }catch(e){
+      clearTimeout(timer);
+      API_PENDING.delete(requestId);
+      cleanup();
+      reject(e);
+    }
   });
-  const text=await res.text();
-  let data;
-  try{data=JSON.parse(text)}catch(e){throw new Error('백엔드 응답을 확인할 수 없습니다. Apps Script 웹앱 배포 URL(/exec)을 확인해 주세요.')}
-  if(!data?.ok){
-    const err=new Error(data?.error||'요청 처리에 실패했습니다.');
-    err.code=data?.code||'';
-    throw err;
-  }
-  return data.data;
 }
 async function afterLogin(){
   const btn=document.getElementById('githubLoginBtn');
