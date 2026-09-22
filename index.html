@@ -1,5 +1,6 @@
+<script src="https://frameby-marketing.github.io/Dashboard_Hub/nav.js"></script>
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
   <base target="_top">
   <meta charset="UTF-8">
@@ -8,6 +9,16 @@
   <title>로그인 정보 관리</title>
 
   <style>
+    :root{
+      --bg:#0f1115;--surface:#171a21;--surface-soft:#1d212a;--border:#2a303b;
+      --text:#e8eaed;--muted:#9aa1ac;--accent:#4c8dff;--accent2:#8b7bf0;
+      --input:#12151b;--hover:#202530;--danger:#ff7a86;--overlay:rgba(0,0,0,.58)
+    }
+    html[data-theme="light"]{
+      --bg:#f6f7f9;--surface:#fff;--surface-soft:#f8f9fb;--border:#e7e9ed;
+      --text:#20242b;--muted:#7a8390;--accent:#2a78d6;--accent2:#7059c9;
+      --input:#fff;--hover:#f1f3f5;--danger:#b34c4c;--overlay:rgba(0,0,0,.36)
+    }
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -353,6 +364,36 @@
       font-weight:800;box-shadow:0 8px 26px rgba(0,0,0,.08)
     }
 
+    /* ===== 공통 대시보드 테마 ===== */
+    body{background:var(--bg);color:var(--text);transition:background .15s,color .15s}
+    header,.toolbar,.tablebox,.modal,.page-loading-box{background:var(--surface);border-color:var(--border)}
+    header,.mh,td,.mf{border-color:var(--border)}
+    th,.mf{background:var(--surface-soft);color:var(--muted)}
+    tbody tr:hover{background:var(--hover)}
+    .status,.desc,.detailkey,label,.loading{color:var(--muted)}
+    .purpose,.detailvalue{color:var(--text)}
+    .search,.field input,.field textarea{
+      background:var(--input);border-color:var(--border);color:var(--text)
+    }
+    .search::placeholder,.field input::placeholder,.field textarea::placeholder{color:var(--muted)}
+    .btn,.mini{background:var(--surface);border-color:var(--border);color:var(--text)}
+    .btn:hover,.mini:hover{background:var(--hover);color:var(--text)}
+    .btn.primary{background:var(--text);border-color:var(--text);color:var(--bg)}
+    .mini.dark{background:var(--surface-soft);color:var(--text)}
+    .error{color:var(--danger)}
+    .modalbg{background:var(--overlay)}
+    .tab{border-color:var(--text)}
+    .top-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+    .seg-toggle{display:inline-flex;align-items:center;background:var(--surface-soft);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px}
+    .seg-toggle button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .seg-toggle button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+    .page-loading{background:color-mix(in srgb,var(--bg) 82%,transparent)}
+    @media(max-width:800px){
+      .top{height:auto;min-height:62px;padding:10px 0;align-items:flex-start;gap:10px}
+      .top-right{gap:8px}
+      .seg-toggle button{padding:6px 10px;font-size:12px}
+    }
+
   </style>
 </head>
 
@@ -376,7 +417,13 @@
   <div class="wrap">
     <div class="top">
       <div class="brand">로그인 정보 관리</div>
-      <div class="status" id="statusText">FRAME BY Google 로그인 필요</div>
+      <div class="top-right">
+        <div class="status" id="statusText">FRAME BY Google 로그인 필요</div>
+        <div class="seg-toggle" id="themeSegToggle" aria-label="화면 테마 선택">
+          <button type="button" id="themeLightBtn" data-theme-opt="light">☀️ 일반모드</button>
+          <button type="button" id="themeDarkBtn" data-theme-opt="dark">🌙 다크모드</button>
+        </div>
+      </div>
     </div>
     <div class="tabs">
       <div class="tab">로그인 정보</div>
@@ -1137,6 +1184,19 @@ function showToast(message) {
     toast.classList.remove('show');
   }, 1800);
 }
+
+/* 전체 플랫폼 매출 대시보드와 동일한 저장 키를 사용해 페이지 간 테마를 유지합니다. */
+function applyTheme(theme) {
+  const next = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('themeLightBtn')?.classList.toggle('active', next === 'light');
+  document.getElementById('themeDarkBtn')?.classList.toggle('active', next === 'dark');
+  localStorage.setItem('theme', next);
+}
+
+applyTheme(localStorage.getItem('theme') || 'dark');
+document.getElementById('themeLightBtn')?.addEventListener('click', function () { applyTheme('light'); });
+document.getElementById('themeDarkBtn')?.addEventListener('click', function () { applyTheme('dark'); });
 
 </script>
 
