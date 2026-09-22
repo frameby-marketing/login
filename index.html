@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <title>로그인 정보 관리</title>
+
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Pretendard,"Noto Sans KR",Arial,sans-serif;
+      background:#f6f7f9;
+      color:#20242b
+    }
+    button,input,textarea{font:inherit}
+
+    header{
+      background:#fff;
+      border-bottom:1px solid #e7e9ed;
+      position:sticky;
+      top:0;
+      z-index:10
+    }
+    .wrap{
+      width:100%;
+      max-width:1500px;
+      margin:0 auto;
+      padding:0 28px
+    }
+    .top{
+      height:62px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between
+    }
+    .brand{font-weight:760;font-size:16px}
+    .status{font-size:12px;color:#8a929d}
+    .tabs{
+      height:42px;
+      display:flex;
+      align-items:flex-end
+    }
+    .tab{
+      height:42px;
+      display:flex;
+      align-items:center;
+      border-bottom:2px solid #171a1f;
+      font-size:14px;
+      font-weight:700
+    }
+
+    main{
+      width:100%;
+      max-width:1500px;
+      margin:0 auto;
+      padding:26px 28px 50px
+    }
+    .pagehead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:18px
+    }
+    h1{margin:0 0 6px;font-size:26px}
+    .desc{font-size:13px;color:#7a8390}
+
+    .toolbar{
+      margin-top:18px;
+      background:#fff;
+      border:1px solid #e7e9ed;
+      border-radius:14px;
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px
+    }
+    .search{
+      flex:1;
+      max-width:620px;
+      height:42px;
+      border:1px solid #dde2e7;
+      border-radius:9px;
+      padding:0 13px;
+      outline:none;
+      font-size:14px
+    }
+    .actions{display:flex;gap:8px}
+    .btn{
+      height:42px;
+      border:1px solid #dde2e7;
+      background:#fff;
+      border-radius:9px;
+      padding:0 14px;
+      cursor:pointer
+    }
+    .btn.primary{
+      background:#171a1f;
+      color:#fff;
+      border-color:#171a1f
+    }
+
+    .tablebox{
+      margin-top:14px;
+      background:#fff;
+      border:1px solid #e7e9ed;
+      border-radius:14px;
+      overflow:hidden
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed
+    }
+    th{
+      background:#f8f9fb;
+      color:#68717d;
+      font-size:13px;
+      text-align:left;
+      padding:13px 16px;
+      border-bottom:1px solid #e7e9ed
+    }
+    td{
+      padding:15px 16px;
+      border-bottom:1px solid #eef0f3;
+      font-size:14px;
+      vertical-align:middle
+    }
+    tr:last-child td{border-bottom:0}
+    tbody tr:hover{background:#fbfcfd}
+
+    th:nth-child(1),td:nth-child(1){width:17%}
+    th:nth-child(2),td:nth-child(2){width:20%}
+    th:nth-child(3),td:nth-child(3){width:21%}
+    th:nth-child(4),td:nth-child(4){width:26%}
+    th:nth-child(5),td:nth-child(5){width:16%}
+
+    .sitecell{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0
+    }
+    .site-name{
+      font-weight:700;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+    .purpose{
+      color:#525b66;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+    .idwrap,.pwwrap{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0
+    }
+    .idtext,.pwtext{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+    .pwtext.masked{letter-spacing:2px}
+
+    .mini{
+      border:1px solid #e1e5ea;
+      background:#fff;
+      color:#626c78;
+      border-radius:7px;
+      padding:5px 7px;
+      font-size:12px;
+      cursor:pointer;
+      white-space:nowrap
+    }
+    .mini:hover{background:#f1f3f5;color:#20242b}
+    .mini.dark{
+      background:#f1f3f5;
+      color:#343a40
+    }
+
+    .manage{
+      display:flex;
+      gap:5px;
+      justify-content:flex-end;
+      flex-wrap:wrap
+    }
+
+    .loading,.error{
+      padding:46px;
+      text-align:center
+    }
+    .loading{color:#9299a3}
+    .error{color:#b34c4c}
+
+    .modalbg{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.36);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:30
+    }
+    .modal{
+      width:min(720px,100%);
+      max-height:calc(100vh - 40px);
+      overflow:auto;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.16)
+    }
+    .modal.small{width:min(650px,100%)}
+    .mh{
+      padding:18px 20px;
+      border-bottom:1px solid #e7e9ed;
+      display:flex;
+      justify-content:space-between;
+      align-items:center
+    }
+    .mb{
+      padding:20px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px
+    }
+    .full{grid-column:1/-1}
+    label{
+      font-size:12px;
+      color:#67707e;
+      font-weight:650
+    }
+    .field input,.field textarea{
+      border:1px solid #dde2e7;
+      border-radius:9px;
+      padding:10px;
+      outline:none
+    }
+    .field textarea{min-height:80px;resize:vertical}
+    .mf{
+      padding:15px 20px;
+      border-top:1px solid #e7e9ed;
+      background:#fafbfc;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px
+    }
+
+    .detailgrid{
+      padding:20px;
+      display:grid;
+      gap:14px
+    }
+    .detailrow{
+      display:grid;
+      grid-template-columns:120px 1fr;
+      gap:14px;
+      align-items:start
+    }
+    .detailkey{
+      font-size:12px;
+      color:#7a8390;
+      font-weight:700;
+      padding-top:2px
+    }
+    .detailvalue{
+      font-size:14px;
+      color:#303740;
+      line-height:1.55;
+      word-break:break-word
+    }
+    .detailvalue a{word-break:break-all}
+    .detail-actions{
+      padding:0 20px 20px;
+      display:flex;
+      justify-content:flex-end;
+      gap:8px
+    }
+
+    .toast{
+      position:fixed;
+      right:24px;
+      bottom:24px;
+      background:#171a1f;
+      color:#fff;
+      padding:11px 14px;
+      border-radius:9px;
+      font-size:12px;
+      opacity:0;
+      transform:translateY(8px);
+      transition:.2s;
+      z-index:50
+    }
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    @media(max-width:1000px){
+      .tablebox{overflow:auto}
+      table{min-width:980px}
+    }
+    @media(max-width:800px){
+      .toolbar{flex-direction:column;align-items:stretch}
+      .search{max-width:none}
+      .mb{grid-template-columns:1fr}
+      .full{grid-column:auto}
+      .wrap,main{padding-left:18px;padding-right:18px}
+    }
+
+
+    /* ===== GitHub 독립형 회사 계정 인증 ===== */
+    body.auth-locked{background:#0f1115;overflow:hidden}
+    body.auth-locked>header,
+    body.auth-locked>main,
+    body.auth-locked>.modalbg,
+    body.auth-locked>.toast{display:none!important}
+    .auth-gate{
+      position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
+      padding:40px 20px;background:#0f1115;color:#e8eaed
+    }
+    .auth-card{
+      max-width:430px;width:100%;text-align:center;background:#171a21;border:1px solid #262b36;
+      border-radius:16px;padding:36px 28px;box-shadow:0 24px 80px rgba(0,0,0,.34)
+    }
+    .auth-icon{font-size:32px;margin-bottom:14px}
+    .auth-card h2{font-size:18px;font-weight:750;margin:0 0 8px}
+    .auth-card p{font-size:13px;color:#9aa1ac;margin:0 0 22px;line-height:1.65}
+    .auth-btn{
+      display:flex;width:100%;justify-content:center;align-items:center;padding:12px 16px;
+      border:1px solid #4c8dff;border-radius:8px;background:#4c8dff;color:#fff;
+      font-size:14px;font-weight:750;cursor:pointer
+    }
+    .auth-btn:disabled{opacity:.55;cursor:default}
+    .auth-error{display:none;color:#ff7a86;font-size:12.5px;margin-top:14px;line-height:1.6}
+    .auth-note{font-size:11.5px!important;margin-top:14px!important;margin-bottom:0!important;color:#777f8b!important}
+    .page-loading{
+      position:fixed;inset:0;z-index:4000;display:grid;place-items:center;
+      background:rgba(246,247,249,.82);backdrop-filter:blur(2px)
+    }
+    .page-loading.hidden{display:none}
+    .page-loading-box{
+      background:#fff;border:1px solid #e7e9ed;border-radius:12px;padding:16px 20px;
+      font-weight:800;box-shadow:0 8px 26px rgba(0,0,0,.08)
+    }
+
+  </style>
+</head>
+
+<body class="auth-locked">
+
+<div id="githubAuthGate" class="auth-gate">
+  <div class="auth-card">
+    <div class="auth-icon">🔒</div>
+    <h2>로그인 정보 관리</h2>
+    <p>FRAME BY 회사 Google 계정으로 로그인해 주세요.<br>스프레드시트 공유 여부와 관계없이 회사 계정이면 이용할 수 있습니다.</p>
+    <button type="button" class="auth-btn" id="githubLoginBtn" disabled>로그인 준비 중...</button>
+    <div class="auth-error" id="githubAuthError"></div>
+    <p class="auth-note">GitHub 독립 사이트 · @frame-by.com 전용</p>
+  </div>
+</div>
+
+<div id="pageLoading" class="page-loading hidden"><div class="page-loading-box">로그인 정보를 불러오는 중...</div></div>
+
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">로그인 정보 관리</div>
+      <div class="status" id="statusText">FRAME BY Google 로그인 필요</div>
+    </div>
+    <div class="tabs">
+      <div class="tab">로그인 정보</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="pagehead">
+    <div>
+      <h1>로그인 정보</h1>
+      <div class="desc">자주 확인하는 정보만 간단하게 보고, 나머지는 상세에서 확인합니다.</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="search" class="search" placeholder="사이트명, ID, 용도, 비고, 인증방식 검색">
+    <div class="actions">
+      <button class="btn" onclick="loadData()">새로고침</button>
+      <button class="btn primary" onclick="openAdd()">+ 계정 추가</button>
+    </div>
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead>
+        <tr>
+          <th>사이트명</th>
+          <th>ID</th>
+          <th>PW</th>
+          <th>용도</th>
+          <th style="text-align:right">관리</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr>
+          <td colspan="5">
+            <div class="loading">기존 로그인 정보를 불러오는 중...</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+
+<!-- 추가/수정 -->
+<div class="modalbg" id="modalbg" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="mh">
+      <b id="mtitle">계정 추가</b>
+      <button class="mini" onclick="closeModal()">닫기</button>
+    </div>
+
+    <div class="mb">
+      <input type="hidden" id="recordId">
+      <input type="hidden" id="createdAt">
+
+      <div class="field">
+        <label>사이트명</label>
+        <input id="site">
+      </div>
+
+      <div class="field">
+        <label>ID</label>
+        <input id="loginId">
+      </div>
+
+      <div class="field full">
+        <label>주소</label>
+        <input id="url">
+      </div>
+
+      <div class="field">
+        <label>PW</label>
+        <input id="pw" type="password">
+      </div>
+
+      <div class="field">
+        <label>계정 사용 방식</label>
+        <input id="auth">
+      </div>
+
+      <div class="field full">
+        <label>용도</label>
+        <textarea id="purpose"></textarea>
+      </div>
+
+      <div class="field full">
+        <label>비고</label>
+        <textarea id="note"></textarea>
+      </div>
+    </div>
+
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary" id="saveBtn" onclick="saveData()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 상세 -->
+<div class="modalbg" id="detailbg" onclick="detailBgClose(event)">
+  <div class="modal small">
+    <div class="mh">
+      <b id="detailTitle">상세 정보</b>
+      <button class="mini" onclick="closeDetail()">닫기</button>
+    </div>
+
+    <div class="detailgrid">
+      <div class="detailrow">
+        <div class="detailkey">사이트명</div>
+        <div class="detailvalue" id="dSite"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">주소</div>
+        <div class="detailvalue" id="dUrl"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">ID</div>
+        <div class="detailvalue" id="dId"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">PW</div>
+        <div class="detailvalue" id="dPw"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">용도</div>
+        <div class="detailvalue" id="dPurpose"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">비고</div>
+        <div class="detailvalue" id="dNote"></div>
+      </div>
+
+      <div class="detailrow">
+        <div class="detailkey">계정 사용 방식</div>
+        <div class="detailvalue" id="dAuth"></div>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="btn" id="detailOpenBtn">사이트 열기</button>
+      <button class="btn" id="detailEditBtn">수정</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+
+const APP_CONFIG = Object.freeze({
+  allowedDomain: 'frame-by.com',
+  oauthClientId: '691753741006-9i13kjkk3ci2jv6lr6rupa491j7rlb64.apps.googleusercontent.com',
+  oauthScope: 'openid email profile',
+  // Apps Script 백엔드를 웹앱으로 배포한 뒤 /exec URL을 여기에 붙여넣으세요.
+  apiUrl: 'https://script.google.com/a/macros/frame-by.com/s/AKfycbyatB28-mjU6xpDMai_OuPMNfgVE-7iRmthmJZfzEEC6ihLnZi6_qV_4PL0JfRB93h7/exec'
+});
+
+let GITHUB_ACCESS_TOKEN = null;
+let GITHUB_TOKEN_CLIENT = null;
+let GITHUB_SILENT = false;
+let GITHUB_SILENT_TIMER = null;
+let GITHUB_USER_EMAIL = '';
+const TOKEN_KEY = 'framebyLoginInfoCompanyToken';
+const TOKEN_EXP_KEY = 'framebyLoginInfoCompanyTokenExp';
+
+function authError(message){
+  const el=document.getElementById('githubAuthError');
+  if(!el) return;
+  el.textContent=message||'';
+  el.style.display=message?'block':'none';
+}
+function lockApp(){document.body.classList.add('auth-locked');document.getElementById('githubAuthGate').style.display='flex'}
+function unlockApp(){document.body.classList.remove('auth-locked');document.getElementById('githubAuthGate').style.display='none'}
+function showPageLoading(message='처리 중...'){
+  const el=document.getElementById('pageLoading');
+  if(!el) return;
+  el.querySelector('.page-loading-box').textContent=message;
+  el.classList.remove('hidden');
+}
+function hidePageLoading(){document.getElementById('pageLoading')?.classList.add('hidden')}
+function tokenCacheGet(){
+  try{
+    const token=sessionStorage.getItem(TOKEN_KEY);
+    const exp=Number(sessionStorage.getItem(TOKEN_EXP_KEY)||0);
+    return token && exp>Date.now() ? token : null;
+  }catch(e){return null}
+}
+function tokenCacheSave(token,expiresIn){
+  GITHUB_ACCESS_TOKEN=token;
+  try{
+    sessionStorage.setItem(TOKEN_KEY,token);
+    sessionStorage.setItem(TOKEN_EXP_KEY,String(Date.now()+Number(expiresIn||3600)*1000-60000));
+  }catch(e){}
+}
+function tokenCacheClear(){
+  try{sessionStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_EXP_KEY)}catch(e){}
+  GITHUB_ACCESS_TOKEN=null;
+}
+function apiUrlReady(){
+  return /^https:\/\/script\.google\.com\/(?:macros\/s|a\/macros\/[^/]+\/s)\/[^/?#]+\/exec(?:\?.*)?$/i.test(APP_CONFIG.apiUrl);
+}
+async function apiCall(action,payload={}){
+  const token=GITHUB_ACCESS_TOKEN||tokenCacheGet();
+  if(!token) throw new Error('Google 로그인이 필요합니다.');
+  if(!apiUrlReady()) throw new Error('Apps Script 백엔드 URL이 아직 설정되지 않았습니다. index.html의 APP_CONFIG.apiUrl을 설정해 주세요.');
+  GITHUB_ACCESS_TOKEN=token;
+
+  const res=await fetch(APP_CONFIG.apiUrl,{
+    method:'POST',
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action,accessToken:token,payload})
+  });
+  const text=await res.text();
+  let data;
+  try{data=JSON.parse(text)}catch(e){throw new Error('백엔드 응답을 확인할 수 없습니다. Apps Script 웹앱 배포 URL(/exec)을 확인해 주세요.')}
+  if(!data?.ok){
+    const err=new Error(data?.error||'요청 처리에 실패했습니다.');
+    err.code=data?.code||'';
+    throw err;
+  }
+  return data.data;
+}
+async function afterLogin(){
+  const btn=document.getElementById('githubLoginBtn');
+  try{
+    lockApp();
+    showPageLoading('회사 계정을 확인하는 중...');
+    const session=await apiCall('session');
+    GITHUB_USER_EMAIL=String(session?.email||'').toLowerCase();
+    if(!GITHUB_USER_EMAIL.endsWith('@'+APP_CONFIG.allowedDomain.toLowerCase())) throw new Error('FRAME BY 회사 계정으로 로그인해 주세요.');
+    authError('');
+    await loadData();
+    const st=document.getElementById('statusText');
+    if(st) st.textContent='FRAME BY · '+GITHUB_USER_EMAIL;
+    unlockApp();
+  }catch(e){
+    hidePageLoading();
+    tokenCacheClear();
+    lockApp();
+    authError(e?.message||'로그인 또는 접근 확인에 실패했습니다.');
+    if(btn){btn.disabled=false;btn.textContent='다른 Google 계정으로 로그인';btn.dataset.forceAccount='1'}
+  }
+}
+function initTokenClient(){
+  if(!window.google?.accounts?.oauth2) return false;
+  GITHUB_TOKEN_CLIENT=google.accounts.oauth2.initTokenClient({
+    client_id:APP_CONFIG.oauthClientId,
+    scope:APP_CONFIG.oauthScope,
+    callback:async resp=>{
+      clearTimeout(GITHUB_SILENT_TIMER);
+      const wasSilent=GITHUB_SILENT;
+      GITHUB_SILENT=false;
+      const btn=document.getElementById('githubLoginBtn');
+      if(resp.error){
+        if(!wasSilent) authError('로그인이 취소되었거나 실패했습니다. 다시 시도해 주세요.');
+        if(btn){btn.disabled=false;btn.textContent='Google 계정으로 로그인'}
+        return;
+      }
+      tokenCacheSave(resp.access_token,resp.expires_in);
+      await afterLogin();
+    }
+  });
+  const btn=document.getElementById('githubLoginBtn');
+  if(btn){btn.disabled=false;btn.textContent='FRAME BY Google 계정으로 로그인'}
+  return true;
+}
+function silentFallback(){
+  GITHUB_SILENT=false;
+  clearTimeout(GITHUB_SILENT_TIMER);
+  const btn=document.getElementById('githubLoginBtn');
+  if(btn){btn.disabled=false;btn.textContent='FRAME BY Google 계정으로 로그인'}
+}
+function silentLogin(){
+  const cached=tokenCacheGet();
+  if(cached){GITHUB_ACCESS_TOKEN=cached;afterLogin();return}
+  if(!GITHUB_TOKEN_CLIENT) return;
+  const btn=document.getElementById('githubLoginBtn');
+  if(btn){btn.disabled=true;btn.textContent='자동 로그인 확인 중...'}
+  GITHUB_SILENT=true;
+  GITHUB_SILENT_TIMER=setTimeout(()=>{if(GITHUB_SILENT)silentFallback()},4000);
+  try{GITHUB_TOKEN_CLIENT.requestAccessToken({prompt:''})}catch(e){silentFallback()}
+}
+function loginClick(){
+  authError('');
+  if(!GITHUB_TOKEN_CLIENT){authError('Google 로그인 준비 중입니다. 잠시 후 다시 시도해 주세요.');return}
+  const btn=document.getElementById('githubLoginBtn');
+  const force=btn?.dataset.forceAccount==='1';
+  if(btn){btn.disabled=true;btn.textContent='로그인 중...';btn.dataset.forceAccount=''}
+  GITHUB_TOKEN_CLIENT.requestAccessToken({prompt:force?'select_account':''});
+}
+function waitForGoogle(){
+  if(initTokenClient()){silentLogin();return}
+  const iv=setInterval(()=>{if(initTokenClient()){clearInterval(iv);silentLogin()}},200);
+}
+
+
+let accounts = [];
+const shownPw = new Set();
+let detailRecordId = '';
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('search').addEventListener('input', render);
+  document.getElementById('githubLoginBtn').addEventListener('click', loginClick);
+  waitForGoogle();
+});
+
+
+async function loadData() {
+  document.getElementById('tbody').innerHTML = `
+    <tr>
+      <td colspan="5">
+        <div class="loading">기존 로그인 정보를 불러오는 중...</div>
+      </td>
+    </tr>
+  `;
+
+  showPageLoading('로그인 정보를 불러오는 중...');
+  try {
+    const data = await apiCall('getAccounts');
+    accounts = Array.isArray(data) ? data : [];
+    shownPw.clear();
+    render();
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error || '데이터를 불러오지 못했습니다.');
+    document.getElementById('tbody').innerHTML = `
+      <tr><td colspan="5"><div class="error">${escapeHtml(message)}</div></td></tr>
+    `;
+    showToast(message);
+    throw error;
+  } finally {
+    hidePageLoading();
+  }
+}
+
+function getSortedAccounts() {
+  return [...accounts].sort(function (a, b) {
+    return String(a.site || '').localeCompare(
+      String(b.site || ''),
+      'ko-KR',
+      { sensitivity: 'base' }
+    );
+  });
+}
+
+
+function render() {
+  const query = document
+    .getElementById('search')
+    .value
+    .trim()
+    .toLowerCase();
+
+  const rows = getSortedAccounts().filter(function (item) {
+    return [
+      item.site,
+      item.url,
+      item.id,
+      item.note,
+      item.purpose,
+      item.auth
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(query);
+  });
+
+  if (!rows.length) {
+    document.getElementById('tbody').innerHTML = `
+      <tr>
+        <td colspan="5">
+          <div class="loading">표시할 정보가 없습니다.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML =
+    rows.map(function (item) {
+      const showPassword = shownPw.has(item.recordId);
+
+      return `
+        <tr>
+          <td>
+            <div class="sitecell">
+              <span class="site-name" title="${escapeAttr(item.site)}">
+                ${escapeHtml(item.site || '-')}
+              </span>
+            </div>
+          </td>
+
+          <td>
+            <div class="idwrap">
+              <span class="idtext" title="${escapeAttr(item.id)}">
+                ${escapeHtml(item.id || '-')}
+              </span>
+              ${
+                item.id
+                  ? `<button class="mini" onclick='copyText(${safeJson(item.id)})'>복사</button>`
+                  : ''
+              }
+            </div>
+          </td>
+
+          <td>
+            <div class="pwwrap">
+              ${
+                item.pw
+                  ? `
+                    <span class="pwtext ${showPassword ? '' : 'masked'}">
+                      ${showPassword ? escapeHtml(item.pw) : '••••••••'}
+                    </span>
+                    <button class="mini" onclick='togglePw(${safeJson(item.recordId)})'>
+                      ${showPassword ? '숨김' : '보기'}
+                    </button>
+                    <button class="mini" onclick='copyText(${safeJson(item.pw)})'>복사</button>
+                  `
+                  : '-'
+              }
+            </div>
+          </td>
+
+          <td>
+            <div class="purpose" title="${escapeAttr(item.purpose)}">
+              ${escapeHtml(item.purpose || '-')}
+            </div>
+          </td>
+
+          <td>
+            <div class="manage">
+              ${
+                item.url
+                  ? `<button class="mini dark" onclick='openSite(${safeJson(item.url)})'>사이트 열기</button>`
+                  : ''
+              }
+              <button class="mini" onclick='openDetail(${safeJson(item.recordId)})'>상세</button>
+              <button class="mini" onclick='editRow(${safeJson(item.recordId)})'>수정</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+}
+
+
+function openSite(url) {
+  const finalUrl = fixUrl(url);
+  window.open(finalUrl, '_blank', 'noopener,noreferrer');
+}
+
+
+function openDetail(recordId) {
+  const item = accounts.find(function (account) {
+    return account.recordId === recordId;
+  });
+
+  if (!item) return;
+
+  detailRecordId = recordId;
+
+  document.getElementById('detailTitle').textContent =
+    (item.site || '계정') + ' 상세 정보';
+
+  document.getElementById('dSite').textContent = item.site || '-';
+
+  document.getElementById('dUrl').innerHTML =
+    item.url
+      ? `<a href="${escapeAttr(fixUrl(item.url))}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.url)}</a>`
+      : '-';
+
+  document.getElementById('dId').innerHTML =
+    item.id
+      ? `${escapeHtml(item.id)} <button class="mini" onclick='copyText(${safeJson(item.id)})'>복사</button>`
+      : '-';
+
+  document.getElementById('dPw').innerHTML =
+    item.pw
+      ? `•••••••• <button class="mini" onclick='copyText(${safeJson(item.pw)})'>복사</button>`
+      : '-';
+
+  document.getElementById('dPurpose').textContent = item.purpose || '-';
+  document.getElementById('dNote').textContent = item.note || '-';
+  document.getElementById('dAuth').textContent = item.auth || '-';
+
+  const openBtn = document.getElementById('detailOpenBtn');
+  openBtn.style.display = item.url ? '' : 'none';
+  openBtn.onclick = function () {
+    if (item.url) openSite(item.url);
+  };
+
+  document.getElementById('detailEditBtn').onclick = function () {
+    closeDetail();
+    editRow(recordId);
+  };
+
+  document.getElementById('detailbg').style.display = 'flex';
+}
+
+
+function closeDetail() {
+  detailRecordId = '';
+  document.getElementById('detailbg').style.display = 'none';
+}
+
+
+function detailBgClose(event) {
+  if (event.target.id === 'detailbg') closeDetail();
+}
+
+
+function openAdd() {
+  clearForm();
+  document.getElementById('mtitle').textContent = '계정 추가';
+  document.getElementById('modalbg').style.display = 'flex';
+}
+
+
+function editRow(recordId) {
+  const item = accounts.find(function (account) {
+    return account.recordId === recordId;
+  });
+
+  if (!item) return;
+
+  document.getElementById('recordId').value = item.recordId || '';
+  document.getElementById('createdAt').value = item.createdAt || '';
+  document.getElementById('site').value = item.site || '';
+  document.getElementById('url').value = item.url || '';
+  document.getElementById('loginId').value = item.id || '';
+  document.getElementById('pw').value = item.pw || '';
+  document.getElementById('note').value = item.note || '';
+  document.getElementById('purpose').value = item.purpose || '';
+  document.getElementById('auth').value = item.auth || '';
+
+  document.getElementById('mtitle').textContent = '계정 수정';
+  document.getElementById('modalbg').style.display = 'flex';
+}
+
+
+async function saveData() {
+  const payload = {
+    recordId: document.getElementById('recordId').value,
+    createdAt: document.getElementById('createdAt').value,
+    site: document.getElementById('site').value.trim(),
+    url: document.getElementById('url').value.trim(),
+    id: document.getElementById('loginId').value.trim(),
+    pw: document.getElementById('pw').value,
+    note: document.getElementById('note').value.trim(),
+    purpose: document.getElementById('purpose').value.trim(),
+    auth: document.getElementById('auth').value.trim()
+  };
+
+  if (!payload.site) {
+    showToast('사이트명을 입력해주세요.');
+    return;
+  }
+
+  const button = document.getElementById('saveBtn');
+  button.disabled = true;
+  button.textContent = '저장 중...';
+  showPageLoading('저장하는 중...');
+
+  try {
+    await apiCall('saveAccount', payload);
+    closeModal();
+    showToast('저장했습니다.');
+    await loadData();
+  } catch (error) {
+    handleError(error);
+  } finally {
+    button.disabled = false;
+    button.textContent = '저장';
+    hidePageLoading();
+  }
+}
+
+function togglePw(recordId) {
+  if (shownPw.has(recordId)) {
+    shownPw.delete(recordId);
+  } else {
+    shownPw.add(recordId);
+  }
+
+  render();
+}
+
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('복사했습니다.');
+  } catch (error) {
+    showToast('복사하지 못했습니다.');
+  }
+}
+
+
+function closeModal() {
+  document.getElementById('modalbg').style.display = 'none';
+  clearForm();
+}
+
+
+function bgClose(event) {
+  if (event.target.id === 'modalbg') {
+    closeModal();
+  }
+}
+
+
+function clearForm() {
+  [
+    'recordId',
+    'createdAt',
+    'site',
+    'url',
+    'loginId',
+    'pw',
+    'note',
+    'purpose',
+    'auth'
+  ].forEach(function (id) {
+    document.getElementById(id).value = '';
+  });
+}
+
+
+function fixUrl(value) {
+  const url = String(value || '').trim();
+  return /^https?:\/\//i.test(url)
+    ? url
+    : 'https://' + url;
+}
+
+
+function safeJson(value) {
+  return JSON
+    .stringify(String(value ?? ''))
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
+}
+
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+
+function handleError(error) {
+  const message =
+    error && error.message
+      ? error.message
+      : String(error || '오류가 발생했습니다.');
+
+  showToast(message);
+}
+
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+
+  toast.textContent = message;
+  toast.classList.add('show');
+
+  clearTimeout(showToast.timer);
+
+  showToast.timer = setTimeout(function () {
+    toast.classList.remove('show');
+  }, 1800);
+}
+
+</script>
+
+</body>
+</html>
