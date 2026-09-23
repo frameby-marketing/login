@@ -7,6 +7,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <title>로그인 정보 관리</title>
+  <script>
+    /* 로그인 화면이 그려지기 전에 홈·다른 대시보드의 공통 테마를 복원합니다. */
+    (function(){
+      try{
+        var saved=localStorage.getItem('theme');
+        var theme=saved==='light'||saved==='dark'?saved:'dark';
+        localStorage.setItem('theme',theme);
+        document.documentElement.setAttribute('data-theme',theme);
+      }catch(e){}
+    })();
+  </script>
 
   <style>
     :root{
@@ -330,30 +341,30 @@
 
 
     /* ===== GitHub 독립형 회사 계정 인증 ===== */
-    body.auth-locked{background:#0f1115;overflow:hidden}
+    body.auth-locked{background:var(--bg);overflow:hidden}
     body.auth-locked>header,
     body.auth-locked>main,
     body.auth-locked>.modalbg,
     body.auth-locked>.toast{display:none!important}
     .auth-gate{
       position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
-      padding:40px 20px;background:#0f1115;color:#e8eaed
+      padding:40px 20px;background:var(--bg);color:var(--text);transition:background .15s,color .15s
     }
     .auth-card{
-      max-width:430px;width:100%;text-align:center;background:#171a21;border:1px solid #262b36;
+      max-width:430px;width:100%;text-align:center;background:var(--surface);border:1px solid var(--border);
       border-radius:16px;padding:36px 28px;box-shadow:0 24px 80px rgba(0,0,0,.34)
     }
     .auth-icon{font-size:32px;margin-bottom:14px}
     .auth-card h2{font-size:18px;font-weight:750;margin:0 0 8px}
-    .auth-card p{font-size:13px;color:#9aa1ac;margin:0 0 22px;line-height:1.65}
+    .auth-card p{font-size:13px;color:var(--muted);margin:0 0 22px;line-height:1.65}
     .auth-btn{
       display:flex;width:100%;justify-content:center;align-items:center;padding:12px 16px;
       border:1px solid #4c8dff;border-radius:8px;background:#4c8dff;color:#fff;
       font-size:14px;font-weight:750;cursor:pointer
     }
     .auth-btn:disabled{opacity:.55;cursor:default}
-    .auth-error{display:none;color:#ff7a86;font-size:12.5px;margin-top:14px;line-height:1.6}
-    .auth-note{font-size:11.5px!important;margin-top:14px!important;margin-bottom:0!important;color:#777f8b!important}
+    .auth-error{display:none;color:var(--danger);font-size:12.5px;margin-top:14px;line-height:1.6}
+    .auth-note{font-size:11.5px!important;margin-top:14px!important;margin-bottom:0!important;color:var(--muted)!important;opacity:.8}
     .page-loading{
       position:fixed;inset:0;z-index:4000;display:grid;place-items:center;
       background:rgba(246,247,249,.82);backdrop-filter:blur(2px)
@@ -1191,12 +1202,22 @@ function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', next);
   document.getElementById('themeLightBtn')?.classList.toggle('active', next === 'light');
   document.getElementById('themeDarkBtn')?.classList.toggle('active', next === 'dark');
-  localStorage.setItem('theme', next);
+  try { localStorage.setItem('theme', next); } catch(e) {}
 }
 
-applyTheme(localStorage.getItem('theme') || 'dark');
+let savedTheme = 'dark';
+try {
+  const saved = localStorage.getItem('theme');
+  if(saved === 'light' || saved === 'dark') savedTheme = saved;
+} catch(e) {}
+applyTheme(savedTheme);
 document.getElementById('themeLightBtn')?.addEventListener('click', function () { applyTheme('light'); });
 document.getElementById('themeDarkBtn')?.addEventListener('click', function () { applyTheme('dark'); });
+window.addEventListener('storage', function(event) {
+  if(event.key === 'theme' && (event.newValue === 'light' || event.newValue === 'dark')) {
+    applyTheme(event.newValue);
+  }
+});
 
 </script>
 
